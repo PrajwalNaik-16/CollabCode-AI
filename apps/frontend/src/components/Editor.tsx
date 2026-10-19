@@ -5,7 +5,7 @@ import { useRoom } from '../contexts/roomContextValue';
 import { editor as MonacoEditorNS } from 'monaco-editor';
 import { useStore } from '../store';
 import { API_URL } from '../config';
-import { executeCode, getLanguageFromExtension } from '../utils/executeCode';
+import { canRunInBrowser, executeCode, getExecutionHint, getLanguageFromExtension } from '../utils/executeCode';
 import {
   Play, Terminal as TerminalIcon, X, Loader2, Download,
   Sparkles, Send, ChevronDown, ChevronUp,
@@ -110,6 +110,8 @@ export function Editor() {
   const language =
     getLanguageFromExtension(fileName) ||
     (['ts', 'tsx'].includes(ext) ? 'typescript' : ext === 'py' ? 'python' : 'javascript');
+  const onlineRunUnavailable = import.meta.env.PROD && !canRunInBrowser(fileName);
+  const executionHint = getExecutionHint(fileName);
 
   const handleEditorMount: OnMount = (editorInstance, monaco) => {
     editorRef.current = editorInstance;
@@ -207,9 +209,14 @@ export function Editor() {
     setIsRunning(true);
     setOutput('⏳ Starting execution...\n');
     const code = ydoc.getText(`file:${activeFileId}`).toString();
-    const result = await executeCode(fileName, code);
-    setOutput(result);
-    setIsRunning(false);
+    try {
+      const result = await executeCode(fileName, code, setOutput);
+      setOutput(result);
+    } catch (error) {
+      setOutput(`Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const getCurrentCode = () => {
@@ -250,6 +257,7 @@ export function Editor() {
           <span className="badge badge-accent" style={{ fontSize: '10px' }}>{language}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="execution-hint">{executionHint}</span>
           <button
             className="btn btn-ghost"
             style={{ fontSize: '12px', padding: '4px 10px' }}
@@ -270,7 +278,8 @@ export function Editor() {
             className="btn btn-success"
             style={{ padding: '5px 14px', fontSize: '12px' }}
             onClick={handleRunCode}
-            disabled={isRunning}
+            disabled={isRunning || onlineRunUnavailable}
+            title={onlineRunUnavailable ? 'Online Run supports JavaScript and Python files only.' : executionHint}
           >
             {isRunning ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} style={{ fill: 'currentColor' }} />}
             {isRunning ? 'Running...' : 'Run'}
@@ -388,6 +397,11 @@ export function Editor() {
           padding: 2px 8px;
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-subtle);
+        }
+        .execution-hint {
+          color: var(--text-muted);
+          font-size: 11px;
+          white-space: nowrap;
         }
 
         /* AI Panel */

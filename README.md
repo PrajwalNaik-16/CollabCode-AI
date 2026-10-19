@@ -66,9 +66,9 @@ If port 3001 is already in use, stop the other backend process before starting a
 
 ## Language support
 
-The **Run** button can execute JavaScript, Python, C, C++, and Java during local development, provided the relevant runtime or compiler is installed where the backend runs. Installing a language toolchain on a visitor’s computer does not affect a hosted app: execution happens on the backend host.
+The **Run** button executes JavaScript and Python in a Web Worker in the user's browser, including on the hosted site. Python uses the Pyodide WebAssembly runtime from jsDelivr; the first Python run needs an internet connection to download the runtime and any supported imported packages. Browser runs have a 10-second execution limit and a 50 KB output limit. This keeps submitted code off the app server, but it is not a general-purpose sandbox for protecting a visitor from code they choose to run; browser code can make network requests.
 
-Production execution is currently disabled. Do not enable it by simply removing the production guard; public code execution needs a dedicated isolated runner with strict time, memory, process, and output limits.
+C, C++, and Java run only during local development through the backend and require their compiler or runtime on the backend machine. They are unavailable on the hosted site. TypeScript and TSX execution are not currently supported. The production backend intentionally refuses to execute submitted code; do not remove that guard to run code on the server.
 
 ## Deploy to Render
 
@@ -81,7 +81,7 @@ The repository includes `render.yaml` and `apps/backend/Dockerfile` for a free, 
 5. In Render, choose **New > Blueprint** and connect the GitHub repository. It reads `render.yaml`, creates the web service on the Free plan, and asks for `DATABASE_URL`, `DIRECT_URL`, and `GROQ_API_KEY`. Paste the two Supabase strings. `GROQ_API_KEY` can be left blank if you do not want AI; Render generates `JWT_SECRET` automatically.
 6. Render runs the PostgreSQL migrations at startup. After deployment, open `https://<your-service>.onrender.com/health` and confirm it returns `{"status":"ok"}`.
 
-This is a no-cost educational deployment. Render's free service sleeps when idle, and Supabase may pause a free database after a week without enough activity. Free hosting has limited capacity and no production uptime guarantee. Online code execution remains disabled until a secure isolated runner is available. AI assistance requires a Groq API key and depends on that provider's current free usage limits.
+This is a no-cost educational deployment. Render's free service sleeps when idle, and Supabase may pause a free database after a week without enough activity. Free hosting has limited capacity and no production uptime guarantee. JavaScript and Python run in each visitor's browser; C, C++, and Java are not available online without a separate isolated runner. AI assistance requires a Groq API key and depends on that provider's current free usage limits.
 
 #### Move existing local SQLite data
 
