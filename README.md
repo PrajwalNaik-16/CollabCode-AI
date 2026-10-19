@@ -1,4 +1,4 @@
-# CollabEditor
+# AI CollabEditor
 
 **A shared coding workspace for editing, discussing, and reviewing code together.**
 
