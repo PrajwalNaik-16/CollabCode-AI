@@ -31,7 +31,7 @@ CollabEditor is a web application for teams that want to work on code in the sam
 
 ### Requirements
 
-- Node.js 20 or later and npm
+- Node.js 24 LTS and npm
 - Python, a C/C++ compiler, or Java only if you want to run programs in that language locally
 - Use a free Supabase project or install Docker Desktop to run PostgreSQL locally
 

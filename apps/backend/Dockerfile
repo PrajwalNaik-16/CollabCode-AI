@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -13,7 +13,7 @@ RUN npm run build --workspace=apps/backend
 RUN npm run build --workspace=apps/frontend
 
 # ── Production image ──────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -25,8 +25,8 @@ COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
 COPY apps/backend/prisma.config.ts ./apps/backend/prisma.config.ts
 RUN npm ci --omit=dev --workspace=apps/backend --include-workspace-root=true
 RUN npm run db:generate --workspace=apps/backend
-COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/frontend/dist ./public
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/apps/frontend/dist ./apps/backend/public
 COPY apps/backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN apk add --no-cache su-exec \
   && chmod +x /usr/local/bin/docker-entrypoint.sh \
