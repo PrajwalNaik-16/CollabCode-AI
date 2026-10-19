@@ -1,0 +1,25 @@
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+coverage/
+**/coverage/
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.db
+*.db-journal
+*.log
+.vite/
+**/.vite/
+/scratch.js
+
+# TypeScript build output generated alongside backend sources
+apps/backend/**/*.js
+apps/backend/**/*.js.map
+apps/backend/**/*.d.ts
+apps/backend/**/*.d.ts.map
+!apps/backend/src/types.d.ts

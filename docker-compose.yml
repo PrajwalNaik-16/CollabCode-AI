@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: ai-coder
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: file:/var/data/collab-editor.db
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in a root .env file before starting}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    volumes:
+      - app_data:/var/data
+
+volumes:
+  app_data:

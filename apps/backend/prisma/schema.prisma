@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  
+  ownedRooms   Room[]   @relation("RoomOwner")
+  roomAccesses RoomAccess[]
+  roomJoinRequests RoomJoinRequest[]
+  friendships1 Friendship[] @relation("FriendshipUser1")
+  friendships2 Friendship[] @relation("FriendshipUser2")
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  ownerId   String?
+  name      String   @unique
+  createdAt DateTime @default(now())
+  files     File[]
+
+  owner     User?    @relation("RoomOwner", fields: [ownerId], references: [id])
+  participants RoomAccess[]
+  joinRequests RoomJoinRequest[]
+}
+
+model RoomAccess {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  role      String   @default("EDITOR") // EDITOR | VIEWER
+  createdAt DateTime @default(now())
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+}
+
+model RoomJoinRequest {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  role      String   @default("EDITOR") // EDITOR | VIEWER requested from invite
+  status    String   @default("PENDING") // PENDING | ACCEPTED | DENIED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  status    String   @default("PENDING") // PENDING, ACCEPTED
+  createdAt DateTime @default(now())
+
+  user1     User     @relation("FriendshipUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2     User     @relation("FriendshipUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@unique([user1Id, user2Id])
+}
+
+model File {
+  id         String   @id @default(uuid())
+  roomId     String
+  name       String
+  crdtBinary Bytes?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
