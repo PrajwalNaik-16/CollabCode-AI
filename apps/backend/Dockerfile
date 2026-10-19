@@ -30,7 +30,6 @@ COPY --from=builder /app/apps/frontend/dist ./public
 COPY apps/backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN apk add --no-cache su-exec \
   && chmod +x /usr/local/bin/docker-entrypoint.sh \
-  && mkdir -p /var/data \
-  && chown -R node:node /var/data /app
+  && chown -R node:node /app
 EXPOSE 3001
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

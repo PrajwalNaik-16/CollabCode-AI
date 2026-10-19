@@ -9,6 +9,7 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate --config=prisma.config.ts",
     "db:deploy": "prisma migrate deploy --config=prisma.config.ts",
+    "db:import-sqlite": "tsx prisma/import-sqlite.ts",
     "dev": "tsx watch src/index.ts",
     "build": "tsc"
   },

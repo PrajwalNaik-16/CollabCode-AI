@@ -1,20 +1,38 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: collab-editor-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: collab_editor
+      POSTGRES_USER: collab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in a root .env file before starting}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U collab -d collab_editor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
   app:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
     container_name: ai-coder
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3001:3001"
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: file:/var/data/collab-editor.db
+      DATABASE_URL: postgresql://collab:${POSTGRES_PASSWORD}@db:5432/collab_editor?schema=public
+      DIRECT_URL: postgresql://collab:${POSTGRES_PASSWORD}@db:5432/collab_editor?schema=public
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in a root .env file before starting}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
-    volumes:
-      - app_data:/var/data
 
 volumes:
-  app_data:
+  db_data:

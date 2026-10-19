@@ -23,7 +23,7 @@ CollabEditor is a web application for teams that want to work on code in the sam
 | Frontend | React, TypeScript, Vite, Monaco Editor, Zustand |
 | Collaboration | Yjs, y-websocket, y-webrtc, y-monaco |
 | Backend | Node.js, Express, WebSocket, Prisma |
-| Local database | SQLite |
+| Database | PostgreSQL (Supabase free tier for hosting; Docker Compose locally) |
 | AI assistant | Groq API (optional) |
 | Deployment | Docker, Docker Compose, Render Blueprint |
 
@@ -33,7 +33,7 @@ CollabEditor is a web application for teams that want to work on code in the sam
 
 - Node.js 20 or later and npm
 - Python, a C/C++ compiler, or Java only if you want to run programs in that language locally
-- Docker Desktop is optional for local development; it is only needed to run the Docker setup on your computer
+- Use a free Supabase project or install Docker Desktop to run PostgreSQL locally
 
 ### 1. Get the source and install dependencies
 
@@ -51,16 +51,16 @@ In PowerShell, from the project root:
 Copy-Item apps/backend/.env.example apps/backend/.env
 ```
 
-Set a private `JWT_SECRET` in `apps/backend/.env`. To enable the AI assistant locally, add your `GROQ_API_KEY` there. Do not commit `.env` files or API keys.
+Set `DATABASE_URL` and `DIRECT_URL` in `apps/backend/.env` to your Supabase PostgreSQL connection strings. `DATABASE_URL` is used by the app; Prisma migrations use `DIRECT_URL`. A Supabase Session Pooler URL can be used for both if the direct connection is unreachable. Set a private `JWT_SECRET` too. To enable the AI assistant, add your `GROQ_API_KEY`. Do not commit `.env` files or API keys.
 
-### 3. Create the local database and start the app
+### 3. Create the database schema and start the app
 
 ```powershell
 npm run db:deploy --workspace=apps/backend
 npm run dev
 ```
 
-Open the Vite URL printed in the terminal (usually `http://localhost:5173`). The backend listens on `http://localhost:3001`.
+Open the Vite URL printed in the terminal (usually `http://localhost:5173`). The backend listens on `http://localhost:3001`. For a local database instead of Supabase, copy the root `.env.example` to `.env`, set `POSTGRES_PASSWORD` and `JWT_SECRET`, then run `docker compose up --build`; this starts PostgreSQL and the app together.
 
 If port 3001 is already in use, stop the other backend process before starting another one.
 
@@ -72,25 +72,42 @@ Production execution is currently disabled. Do not enable it by simply removing 
 
 ## Deploy to Render
 
-The repository includes `render.yaml` and `apps/backend/Dockerfile` for a single-service Render deployment.
+The repository includes `render.yaml` and `apps/backend/Dockerfile` for a free, single-service Render deployment with a free Supabase PostgreSQL database.
 
 1. Push the repository to GitHub.
-2. In Render, create a **Blueprint** and connect the GitHub repository.
-3. Review the service settings from `render.yaml`. It uses a persistent disk for SQLite data; Render does not provide persistent disks on its free web-service plan, so this configuration requires a paid web service if data must survive restarts and deploys.
-4. Add `GROQ_API_KEY` in Render if you want AI features. Render generates `JWT_SECRET` from the Blueprint configuration.
-5. After deployment, open `https://<your-service>.onrender.com/health` and confirm it returns `{"status":"ok"}`.
+2. In Supabase, create a project on the Free plan. Choose a database password and keep it private. Choose a region near your Render service.
+3. When the project is ready, open its **Connect** dialog and select **Session pooler**. Copy the full connection string (port `5432`). Replace only its password placeholder with your database password. This is the app's `DATABASE_URL`.
+4. Copy the direct connection string from **Connect** for `DIRECT_URL`, which Prisma uses to apply migrations. Supabase direct connections are IPv6; if Render cannot reach it, use the Session pooler string for `DIRECT_URL` too. If the password contains reserved URL characters such as `#`, `?`, `&`, or spaces, percent-encode them in both URLs.
+5. In Render, choose **New > Blueprint** and connect the GitHub repository. It reads `render.yaml`, creates the web service on the Free plan, and asks for `DATABASE_URL`, `DIRECT_URL`, and `GROQ_API_KEY`. Paste the two Supabase strings. `GROQ_API_KEY` can be left blank if you do not want AI; Render generates `JWT_SECRET` automatically.
+6. Render runs the PostgreSQL migrations at startup. After deployment, open `https://<your-service>.onrender.com/health` and confirm it returns `{"status":"ok"}`.
 
-The current SQLite setup is intended for a small, single-instance deployment. Before scaling to multiple instances, move to a shared production database such as PostgreSQL and review the collaboration persistence and execution architecture.
+This is a no-cost educational deployment. Render's free service sleeps when idle, and Supabase may pause a free database after a week without enough activity. Free hosting has limited capacity and no production uptime guarantee. Online code execution remains disabled until a secure isolated runner is available. AI assistance requires a Groq API key and depends on that provider's current free usage limits.
+
+#### Move existing local SQLite data
+
+The old SQLite file is left untouched, but the PostgreSQL version does not use it. To move local users, rooms, permissions, requests, friendships, and saved file contents, export before deploying:
+
+```powershell
+python apps/backend/prisma/export-sqlite.py apps/backend/dev.db collab-export.json
+```
+
+After Supabase migrations have run, configure `apps/backend/.env` with the Supabase connection strings and import into the still-empty database:
+
+```powershell
+npm run db:import-sqlite --workspace=apps/backend -- ../../collab-export.json
+```
+
+The export contains account email addresses and password hashes. It is ignored by Git; keep it private and delete it after confirming the import.
 
 ## Docker on your computer
 
-Docker Desktop is not required for a Render Blueprint deployment. To build and run the app locally in Docker, install Docker Desktop, create a root `.env` from `.env.example`, set a strong `JWT_SECRET`, then run:
+Docker Desktop is not required for a Render Blueprint deployment. To build and run the app and PostgreSQL locally in Docker, install Docker Desktop, create a root `.env` from `.env.example`, set strong `JWT_SECRET` and `POSTGRES_PASSWORD` values, then run:
 
 ```powershell
 docker compose up --build
 ```
 
-Open `http://localhost:3001`. The SQLite database is stored in the Compose volume. Production code execution remains disabled.
+Open `http://localhost:3001`. PostgreSQL data is stored in the Compose volume. Production code execution remains disabled.
 
 ## Project layout
 
@@ -113,7 +130,7 @@ npm run build --workspace=apps/frontend
 npm test --workspace=apps/backend
 ```
 
-Backend tests require an isolated test database. Set `DATABASE_URL=file:./test.db` and `JWT_SECRET` before running them; the test suite refuses to run against a non-test database.
+Backend tests require an isolated PostgreSQL database named `collab_editor_test` and `NODE_ENV=test`; the test suite refuses to run against another database. GitHub Actions provisions this database automatically.
 
 ## Contributing
 

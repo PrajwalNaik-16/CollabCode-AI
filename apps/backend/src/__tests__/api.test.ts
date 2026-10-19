@@ -15,11 +15,15 @@ app.use('/api/rooms', roomsRouter);
 const prisma = new PrismaClient();
 
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const databaseFile = databaseUrl.startsWith('file:')
-  ? (databaseUrl.slice('file:'.length).split('?')[0] ?? '').replace(/\\/g, '/').split('/').pop() ?? ''
-  : '';
-if (databaseFile !== 'test.db' && databaseFile !== ':memory:') {
-  throw new Error('API tests require DATABASE_URL=file:./test.db (or file::memory:). Refusing to run against a non-test database.');
+const databaseName = (() => {
+  try {
+    return new URL(databaseUrl).pathname.replace(/^\//, '');
+  } catch {
+    return '';
+  }
+})();
+if (process.env.NODE_ENV !== 'test' || databaseName !== 'collab_editor_test') {
+  throw new Error('API tests require NODE_ENV=test and a DATABASE_URL targeting collab_editor_test. Refusing to run against another database.');
 }
 
 // ─── Test users ───────────────────────────────────────────────────

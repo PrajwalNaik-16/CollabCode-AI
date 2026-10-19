@@ -16,6 +16,7 @@ coverage/
 .vite/
 **/.vite/
 /scratch.js
+collab-export.json
 
 # TypeScript build output generated alongside backend sources
 apps/backend/**/*.js

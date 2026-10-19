@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"] as string,
+    // Prisma Migrate uses Supabase's direct URL; Prisma Client uses DATABASE_URL.
+    url: process.env["DIRECT_URL"] as string,
   },
 });
