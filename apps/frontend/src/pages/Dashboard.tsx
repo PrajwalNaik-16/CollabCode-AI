@@ -210,11 +210,11 @@ export function Dashboard() {
     <div className="dashboard">
       {/* Header */}
       <header className="dash-header">
-        <Link to="/dashboard" className="dash-header-left dash-brand" aria-label="CollabEditor dashboard">
+        <Link to="/dashboard" className="dash-header-left dash-brand" aria-label="CollabCode AI dashboard">
           <div className="dash-logo">
             <Code2 size={20} />
           </div>
-          <span className="dash-logo-text">CollabEditor</span>
+          <span className="dash-logo-text">CollabCode AI</span>
         </Link>
         <div className="dash-header-right">
           <div className="dash-user-chip">

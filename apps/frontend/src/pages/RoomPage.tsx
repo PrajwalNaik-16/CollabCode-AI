@@ -265,7 +265,7 @@ function RoomContent({ roomId }: { roomId: string }) {
           <button className="btn-icon" onClick={() => navigate('/dashboard')} title="Dashboard">
             <ArrowLeft size={16} />
           </button>
-          <Link to="/dashboard" className="room-header-logo" title="Go to dashboard" aria-label="CollabEditor dashboard">
+          <Link to="/dashboard" className="room-header-logo" title="Go to dashboard" aria-label="CollabCode AI dashboard">
             <Code2 size={15} />
           </Link>
           <div className="room-breadcrumb">

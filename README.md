@@ -1,8 +1,8 @@
-# AI CollabEditor
+# CollabCode AI
 
 **A shared coding workspace for editing, discussing, and reviewing code together.**
 
-CollabEditor is a web application for teams that want to work on code in the same room. It combines a Monaco-based editor, real-time document synchronization, room access controls, chat, and optional AI assistance.
+CollabCode AI is a collaborative coding workspace where teams can edit code in real time, manage room access, chat, and use AI assistance.
 
 > This project is in active development. Code execution is available for local development only; it is disabled in production until a secure isolated runner is configured.
 

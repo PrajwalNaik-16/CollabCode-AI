@@ -54,7 +54,7 @@ export function Auth() {
           <div className="auth-logo-icon">
             <Code2 size={24} />
           </div>
-          <h1 className="auth-logo-title gradient-text">CollabEditor</h1>
+          <h1 className="auth-logo-title gradient-text">CollabCode AI</h1>
         </div>
 
         <p className="auth-subtitle">
